@@ -1,59 +1,149 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=1920"/>
-    <meta name="description"
-          content="Tizen Download API Demo" />
-
-    <title>Tizen Download API</title>
-
-    <script type='text/javascript' src='$WEBAPIS/webapis/webapis.js'></script>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elf Photo Uploader</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('background_image.png'); /* Background image */
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #container {
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    canvas {
+      border: 2px solid black;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #f0f0f0;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+  </style>
 </head>
-
 <body>
+  <div id="container">
+    <h1>Elf Photo Uploader</h1>
+    <canvas id="elfCanvas" width="400" height="500"></canvas>
+    <br>
+    <input type="file" id="imageInput" accept="image/*">
+    <br>
+    <button id="resizeUp">Make Bigger</button>
+    <button id="resizeDown">Make Smaller</button>
+    <button id="widen">Make Wider</button>
+    <button id="thin">Make Thinner</button>
+    <button id="rotate">Rotate</button>
+    <script>
+      const canvas = document.getElementById('elfCanvas');
+      const ctx = canvas.getContext('2d');
+      const imageInput = document.getElementById('imageInput');
 
-    <h1>Tizen Download API</h1>
+      const resizeUp = document.getElementById('resizeUp');
+      const resizeDown = document.getElementById('resizeDown');
+      const widen = document.getElementById('widen');
+      const thin = document.getElementById('thin');
+      const rotate = document.getElementById('rotate');
 
-    <div class="left">
-        <h2>Available buttons/actions:</h2>
+      let uploadedImage = null;
+      let uploadedImageX = 100;
+      let uploadedImageY = 100;
+      let uploadedImageWidth = 200;
+      let uploadedImageHeight = 200;
+      let rotation = 0;
 
-        <div>
-            1 - Downloaded file lists<br>
-            2 - Start download - small file<br>
-            3 - Start download - large file<br>
-            Pause - Pause download<br>
-            Play - Resume download<br>
-            Stop - Cancel download<br>
-            0 - Clear logs
-        </div>
+      const elfImage = new Image();
+      elfImage.src = 'photo_2024-12-02_02-58-57.jpg'; // Add the elf background image here
+      elfImage.onload = () => {
+        ctx.drawImage(elfImage, 0, 0, canvas.width, canvas.height);
+      };
 
-        <div id="progress" class="progress">
-            <div id="bar" class="bar"></div>
-        </div>
+      imageInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            uploadedImage = new Image();
+            uploadedImage.onload = () => {
+              redrawCanvas();
+            };
+            uploadedImage.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
 
-        <fieldset>
-            <legend>Downloaded files:</legend>
-            <div id="fileList" class="logs"></div>
-        </fieldset>
+      function redrawCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(elfImage, 0, 0, canvas.width, canvas.height);
+        if (uploadedImage) {
+          ctx.save();
+          ctx.translate(uploadedImageX + uploadedImageWidth / 2, uploadedImageY + uploadedImageHeight / 2);
+          ctx.rotate(rotation * Math.PI / 180);
+          ctx.drawImage(
+            uploadedImage,
+            -uploadedImageWidth / 2,
+            -uploadedImageHeight / 2,
+            uploadedImageWidth,
+            uploadedImageHeight
+          );
+          ctx.restore();
+        }
+      }
 
-        <fieldset>
-            <legend>Logs</legend>
-            <div id="logs" class="logs"></div>
-        </fieldset>
-    </div>
-    <div class="right">
-        <h2>Info</h2>
+      resizeUp.addEventListener('click', () => {
+        uploadedImageWidth *= 1.1;
+        uploadedImageHeight *= 1.1;
+        redrawCanvas();
+      });
 
-        <p>This application demonstrates the usage of Tizen download API</p>
+      resizeDown.addEventListener('click', () => {
+        uploadedImageWidth *= 0.9;
+        uploadedImageHeight *= 0.9;
+        redrawCanvas();
+      });
 
-        <p>The application downloads files from <code>http://techslides.com</code> and <code>http://download.blender.org</code>. If these domains are not accessible it will not work.<br>
+      widen.addEventListener('click', () => {
+        uploadedImageWidth *= 1.1;
+        redrawCanvas();
+      });
 
-            You can change the source location of files to download by changing the contents of <code>url1</code> and <code>url2</code> variables in <code>main.js</code> file</cide></p>
-    </div>
+      thin.addEventListener('click', () => {
+        uploadedImageWidth *= 0.9;
+        redrawCanvas();
+      });
 
-    <script src="main.js"></script>
+      rotate.addEventListener('click', () => {
+        rotation += 15; // Rotate 15 degrees clockwise
+        redrawCanvas();
+      });
+    </script>
+  </div>
 </body>
 </html>
